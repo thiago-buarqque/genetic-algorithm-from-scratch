@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 
 class SelectionToolbox:
@@ -8,6 +9,6 @@ class SelectionToolbox:
             selected_individuals = np.random.choice(pop, size=tourn_size, replace=False)
 
             winner = max(selected_individuals, key=lambda ind: ind.fitness if ind.fitness > ind.fitness else ind.fitness)
-            new_population.append(winner)
+            new_population.append(copy.deepcopy(winner))
 
         return new_population

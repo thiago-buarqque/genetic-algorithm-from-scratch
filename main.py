@@ -1,24 +1,45 @@
+from cmath import sin, sqrt
 import numpy as np
+
+from operator import attrgetter
 
 from genetic_operators.crossover.crossoverToolbox import CrossoverToolbox
 from genetic_operators.selection.selectionToolbox import SelectionToolbox
 from individual.Individual import Individual
 
+import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
 
-def fitness_func(*args):
-    return np.random.uniform(low=0, high=1)
 
-def mutation_func(ind):
-    min_bound = -100
-    max_bound = 100
+# def fitness_func(x1, x2):
+#     # x1 = genes[0]
+#     # x2 = genes[1]
+#     print(f'{x1}, {x2}')
 
+#     return sin(x1 + x2) + (x1 - x2)**2 - (1.5*x1) + (2.5*x2) + 1
+
+def fitness_func(genes):
+    x1 = genes[0]
+    x2 = genes[1]
+
+    return -((x2 + 47)*sin(sqrt(abs((x1/2) + (x2 + 47))))) - (x1*sin(sqrt(abs(x1 - (x2 + 47)))))
+
+
+def fitness_func_(x1, x2):
+    return -((x2 + 47)*sin(sqrt(abs((x1/2) + (x2 + 47))))) - (x1*sin(sqrt(abs(x1 - (x2 + 47)))))
+
+def mutation_func(ind, min_bound, max_bound):
     gene_i = np.random.randint(low=0, high=len(ind.genes), size=1)
-    ind.genes[gene_i] = np.random.randint(low=min_bound, high=max_bound+1, size=1)
+    ind.genes[gene_i] = np.random.uniform(
+        low=min_bound, high=max_bound+1, size=1)
+
 
 if __name__ == '__main__':
+    min_bound = -512
+    max_bound = 511
     pop = []
-    for i in range(10):
-        ind_genes = np.random.randint(low=-100, high=101, size=4)
+    for i in range(500):
+        ind_genes = np.random.uniform(low=min_bound, high=max_bound+1, size=2)
         pop.append(Individual(
             genes=ind_genes,
             fitness_function=fitness_func
@@ -32,39 +53,60 @@ if __name__ == '__main__':
 
     sl_toolbox = SelectionToolbox()
     cs_toolbox = CrossoverToolbox()
-    new_pop = sl_toolbox.sl_tournament(pop)
 
-    new_pop_str = []
-    for ind in new_pop:
-        new_pop_str.append(ind.__str__())
+    for i in range(50):
+        offspring = sl_toolbox.sl_tournament(pop)
 
-    # print(f'max: {max(pop_str)} min: {min(pop_str)} - {pop_str}')
-    # print(f'max: {max(new_pop_str)} min: {min(new_pop_str)} - {new_pop_str}')
+        # Peform crossover
+        for child1, child2 in zip(offspring[::2], offspring[1::2]):
+            if np.random.uniform() < 0.75:
+                cs_toolbox.cs_uniform(child1, child2)
+                child1.fitness = None
+                child2.fitness = None
 
-    print(f'Old pop: {pop_str}')
-    print(f'New pop: {new_pop_str}\n')
+        # Perform mutation
+        for ind in [ind for ind in offspring if ind.fitness == None]:
+            if np.random.uniform() < 0.15:
+                mutation_func(ind, min_bound, max_bound)
+                ind.fitness = None
 
-    for child1, child2 in zip(new_pop[::2], new_pop[1::2]):
-        if np.random.uniform() < 0.75:
-            cs_toolbox.cs_uniform(child1, child2)
-            child1.fitness = None
-            child2.fitness = None
+        for invalid_ind in [ind for ind in offspring if ind.fitness == None]:
+            invalid_ind.evaluate_fitness()
 
-    new_pop_str = []
-    for ind in new_pop:
-        new_pop_str.append(ind.__str__())
+        pop = offspring
 
-    print(f'Offspring')
-    print(new_pop_str)
+        fits = [ind.fitness for ind in pop]
 
-    for mutant in new_pop:
-        if np.random.uniform() < 0.15:
-            mutation_func(mutant)
-            mutant.fitness = None
+        length = len(pop)
+        mean = sum(fits) / length
+        sum2 = sum(x*x for x in fits)
+        # std = abs(sum2 / length - mean**2)**0.5
 
-    new_pop_str = []
-    for ind in new_pop:
-        new_pop_str.append(ind.__str__())
+        best_ind = max(pop, key=attrgetter('fitness'))
+        print(
+            f"Min: {min(fits)} - Avg: {mean} - Max: {max(fits)} - Best: {best_ind}")
 
-    print(f'Final pop')
-    print(new_pop_str)
+
+    x = np.linspace(-512, 512, 30)
+    y = np.linspace(-512, 512, 30)
+
+    X, Y = np.meshgrid(x, y)
+    Z = np.vectorize(fitness_func_)(X, Y)
+
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
+                cmap='viridis', edgecolor='none')
+    ax.contour3D(X, Y, Z, 50, cmap='binary')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z');
+
+    plt.show()
+
+        # new_pop_str = []
+        # for ind in new_pop:
+        #     new_pop_str.append(ind.__str__())
+
+        # print(f'Final pop')
+        # print(new_pop_str)
