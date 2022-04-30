@@ -27,10 +27,24 @@ class Operations:
             for ind in s_inds:
                 sum_ += getattr(ind, "fitness")
                 if sum_ > u:
-                    chosen.append(ind)
+                    chosen.append(copy.deepcopy(ind))
                     break
 
         return chosen
+
+    def cs_two_point(self, ind1, ind2):
+        cut_point1 = random.randint(0, len(ind1.genes))
+        cut_point2 = random.randint(0, len(ind1.genes) - 1)
+
+        if cut_point2 >= cut_point1:
+            cut_point2 += 1
+        else:
+            cut_point1, cut_point2 = cut_point2, cut_point1
+
+        ind1.genes[cut_point1:cut_point2], ind2.genes[cut_point1:cut_point2] \
+            = ind2.genes[cut_point1:cut_point2], ind1.genes[cut_point1:cut_point2]
+
+        return ind1, ind2
 
     def cs_uniform(self, ind1, ind2):
         for i in range(len(ind1.genes)):
