@@ -1,15 +1,13 @@
 from cmath import sin, sqrt
-import random
 import numpy as np
-
-from operator import attrgetter
 
 from ga.Individual import Individual
 
 import matplotlib.pyplot as plt
-from ga.ga import GA
+from ga.operations import Operations
 
-from ga.toolbox import ToolBox
+from ga.toolbox import Toolbox
+from ga.ga import GA
 
 
 def fitness_func(genes):
@@ -23,39 +21,66 @@ def fitness_func_(x1, x2):
     return (-((x2 + 47) * sin(sqrt(abs((x1 / 2) + (x2 + 47))))) - (x1 * sin(sqrt(abs(x1 - (x2 + 47)))))).real
 
 
-def fit(x1):
-    return random.uniform(0, 1)
+def mutation_func(ind):
+    gene_i = np.random.randint(low=0, high=len(ind.genes))
 
+    lower_bound = ind.complex_genes[gene_i]['lower_bound']
+    upper_bound = ind.complex_genes[gene_i]['upper_bound']
 
-def mutation_func(ind, min_bound, max_bound):
-    gene_i = np.random.randint(low=0, high=len(ind.genes), size=1)
-    ind.genes[gene_i] = np.random.uniform(
-        low=min_bound, high=max_bound + 1, size=1)
+    # Make np.random.func_type be chosed by the user
+    ind.genes[gene_i] = np.random.randint(
+        low=lower_bound, high=upper_bound + 1)
 
 
 if __name__ == '__main__':
-    ind1 = Individual(genes=[900, 123], fitness_function=fit)
-    ind2 = Individual(genes=[342, 53], fitness_function=fit)
-    ind3 = Individual(genes=[101, -23], fitness_function=fit)
-    ind4 = Individual(genes=[10, -123], fitness_function=fit)
-    ind5 = Individual(genes=[-621, 144], fitness_function=fit)
+    operations = Operations()
+    toolbox = Toolbox()
 
-    ind1.evaluate_fitness()
-    ind2.evaluate_fitness()
-    ind3.evaluate_fitness()
-    ind4.evaluate_fitness()
-    ind5.evaluate_fitness()
+    base_ind = Individual()
+    base_ind.register("x1", np.random.randint, -512, 512)
+    base_ind.register("x2", np.random.randint, -512, 512)
 
-    print(
-        f'Fitnesses iniciais: {ind1.fitness},{ind2.fitness}, {ind3.fitness}, {ind4.fitness}, {ind5.fitness}')
+    toolbox.register("select", operations.sl_tournament)
+    toolbox.register("crossover", operations.cs_uniform)
+    toolbox.register("mutate", mutation_func)
+    toolbox.register("evaluate", fitness_func)
 
-    pop = [ind1, ind2, ind3, ind4, ind5]
+    ga = GA(
+        base_ind=base_ind,
+        crossover_rate=0.75,
+        generations=100,
+        mutation_rate=0.2,
+        population_size=100,
+        toolbox=toolbox
+    )
 
-    toolbox = ToolBox()
+    ga.optimize()
 
-    print()
-    for ind in toolbox.sl_roulette_wheel(pop):
-        print(ind.fitness)
+    # print(f'{toolbox.evaluate(43, 29)}')
+    # print(f'A new pop:')
+    # print(toolbox.generate_population(base_ind, 5)[0])
+    # ind1 = Individual(genes=[900, 123], fitness_function=fit)
+    # ind2 = Individual(genes=[342, 53], fitness_function=fit)
+    # ind3 = Individual(genes=[101, -23], fitness_function=fit)
+    # ind4 = Individual(genes=[10, -123], fitness_function=fit)
+    # ind5 = Individual(genes=[-621, 144], fitness_function=fit)
+
+    # ind1.evaluate_fitness()
+    # ind2.evaluate_fitness()
+    # ind3.evaluate_fitness()
+    # ind4.evaluate_fitness()
+    # ind5.evaluate_fitness()
+
+    # print(
+    #     f'Fitnesses iniciais: {ind1.fitness},{ind2.fitness}, {ind3.fitness}, {ind4.fitness}, {ind5.fitness}')
+
+    # pop = [ind1, ind2, ind3, ind4, ind5]
+
+    # toolbox = ToolBox()
+
+    # print()
+    # for ind in toolbox.sl_roulette_wheel(pop):
+    #     print(ind.fitness)
 
     # ga = GA(crossover_func=1, crossover_rate=0.9, generations=100,
     #         population_size=100, mutation_func=1, mutation_rate=0.05, use_elitism=True)

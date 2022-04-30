@@ -1,43 +1,30 @@
 import copy
-from operator import attrgetter
-import random
+from functools import partial
 
 import numpy as np
 
 
-class ToolBox:
-    def sl_tournament(self, pop, tourn_size=2):
-        new_population = []
-        for i in range(len(pop)):
-            selected_individuals = np.random.choice(
-                pop, size=tourn_size, replace=False)
+class Toolbox:
+    # Ok
+    def generate_population(self, base_ind, pop_size, eval_func):
+        pop = []
 
-            winner = max(selected_individuals,
-                         key=lambda ind: ind.fitness if ind.fitness > ind.fitness else ind.fitness)
-            new_population.append(copy.deepcopy(winner))
+        for i in range(pop_size):
+            new_ind = copy.deepcopy(base_ind)
+            new_ind.random_init()
+            new_ind.fitness_function = eval_func
 
-        return new_population
+            pop.append(new_ind)
 
-    def sl_roulette_wheel(self, pop):
-        s_inds = sorted(pop, key=attrgetter("fitness"), reverse=True)
-        sum_fits = sum(getattr(ind, "fitness") for ind in pop)
-        chosen = []
-        for i in range(len(pop)):
-            u = random.random() * sum_fits
-            sum_ = 0
-            for ind in s_inds:
-                sum_ += getattr(ind, "fitness")
-                if sum_ > u:
-                    chosen.append(ind)
-                    break
+        return pop
 
-        return chosen
+    # Ok
+    def register(self, attr_name, function, *args, **kargs):
+        pfunc = partial(function, *args, **kargs)
+        pfunc.__name__ = attr_name
+        pfunc.__doc__ = function.__doc__
 
+        if hasattr(function, "__dict__") and not isinstance(function, type):
+            pfunc.__dict__.update(function.__dict__.copy())
 
-    def cs_uniform(self, ind1, ind2):
-        for i in range(len(ind1.genes)):
-            if random.random() < 0.5:
-                temp = ind1.genes[i]
-                ind1.genes[i] = ind2.genes[i]
-                ind2.genes[i] = temp
-        return ind1, ind2
+        setattr(self, attr_name, pfunc)
