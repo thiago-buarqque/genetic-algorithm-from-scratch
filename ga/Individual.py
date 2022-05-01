@@ -10,7 +10,7 @@ class Individual:
         fit_func_vars_dict = {}
         for i, complex in enumerate(self.complex_genes):
             fit_func_vars_dict[complex["attr_name"]] = self.genes[i]
-        
+
         self.fitness = self.fitness_function(fit_func_vars_dict)
 
     def register(self, attr_name, gen_function, lower_bound, upper_bound, *args):
@@ -27,7 +27,8 @@ class Individual:
         self.fitness = None
 
         for complex in self.complex_genes:
-            self.genes.append(complex["gen_func"](complex["lower_bound"], complex["upper_bound"]))
+            self.genes.append(complex["gen_func"](
+                complex["lower_bound"], complex["upper_bound"]))
 
     def __str__(self):
         return f"{self.genes}"

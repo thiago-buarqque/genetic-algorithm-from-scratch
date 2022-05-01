@@ -1,7 +1,5 @@
-from cmath import sin, sqrt
 import copy
 from operator import attrgetter
-from tkinter import E
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -135,14 +133,14 @@ class GA:
         t = np.arange(len(self.convergence_data))
         s = self.convergence_data
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(dpi=100)
         ax.plot(t, s)
 
         ax.set(xlabel='Generation', ylabel='Fitness (max)',
                title='Convergence curve')
         ax.grid()
 
-        fig.savefig("convergence_curve.png")
+        fig.savefig("convergence_curve.png", dpi=300)
         plt.show()
 
     def plot_min_avg_max(self):
@@ -151,7 +149,7 @@ class GA:
         avg_data = self.gen_avg_data
         max_data = self.gen_max_data
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(dpi=100)
         plt.plot(gens, min_data, label="min")
         plt.plot(gens, avg_data, label="avg")
         plt.plot(gens, max_data, label="max")
@@ -162,7 +160,7 @@ class GA:
                title='Min, avg, max fitness p/ gen.')
         ax.grid()
 
-        fig.savefig("min_avg_max_curves.png")
+        fig.savefig("min_avg_max_curves.png", dpi=300)
         plt.show()
 
     def plot_3d_fitness_function(self):
@@ -177,7 +175,7 @@ class GA:
         X, Y = np.meshgrid(x, y)
         Z = np.vectorize(self.toolbox.plot_eval_func)(X, Y)
 
-        fig = plt.figure()
+        fig = plt.figure(dpi=100)
         ax = plt.axes(projection='3d')
         surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
                                cmap='viridis', edgecolor='none')
@@ -191,5 +189,5 @@ class GA:
                    [self.best_ind.fitness], plotnonfinite=True, zorder=10)
 
         fig.colorbar(surf, shrink=0.5, aspect=5)
-        fig.savefig("best_individual_3d.png")
+        fig.savefig("best_individual_3d.png", dpi=300)
         plt.show()

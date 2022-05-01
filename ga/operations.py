@@ -6,7 +6,8 @@ from operator import attrgetter
 
 class Operations:
     def sl_tournament(self, pop, n, tourn_size=2):
-        print(f"Tourn of {tourn_size} with len pop of {len(pop)} to get {n} inds")
+        print(
+            f"Tourn of {tourn_size} with len pop of {len(pop)} to get {n} inds")
         new_population = []
         for i in range(n):
             selected_individuals = np.random.choice(

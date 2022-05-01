@@ -50,7 +50,7 @@ if __name__ == '__main__':
         print("0- Exit")
         print("1- Plot convergence curve")
         print("2- Plot min, avg and max of each generation")
-        print("3- Plot 3d graph with the best solution found (2 vars functions only)")
+        print("3- Plot 3d graph with the best solution found (2 dimensional functions only)")
 
         choose = input(": ")
 

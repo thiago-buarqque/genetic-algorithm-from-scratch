@@ -1,8 +1,6 @@
 import copy
 from functools import partial
 
-import numpy as np
-
 
 class Toolbox:
     # Ok
