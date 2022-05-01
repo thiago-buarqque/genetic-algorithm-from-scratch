@@ -15,7 +15,7 @@ class GA:
                  toolbox,
                  base_ind,
                  max_generations,
-                 elite_size = 0,
+                 elite_size=0,
                  early_stop_strg=[None, None]):
         self.crossover_rate = crossover_rate
 
@@ -33,6 +33,8 @@ class GA:
         self.gen_min_data = []
         self.gen_avg_data = []
         self.gen_max_data = []
+
+        self.best_ind = None
 
         self.max_generations = max_generations
         self.elite_size = elite_size
@@ -61,14 +63,15 @@ class GA:
         return [copy.deepcopy(ind) for ind in elite], pop
 
     def optimize(self):
-        best_ind = None
+        self.best_ind = None
 
         self.convergence_data = []
 
         early_stop_last_ind = None
         early_stop_counter = 0
         for i in range(self.max_generations):
-            elite, aux_pop = self.separate_elite(copy.deepcopy(self.pop), self.elite_size)
+            elite, aux_pop = self.separate_elite(
+                copy.deepcopy(self.pop), self.elite_size)
 
             offspring = self.toolbox.select(self.pop, len(aux_pop))
 
@@ -95,7 +98,7 @@ class GA:
 
             # Early stopping conditions
             gen_best_ind = max(self.pop, key=attrgetter('fitness'))
-            if best_ind == None or gen_best_ind.fitness > best_ind.fitness:
+            if self.best_ind == None or gen_best_ind.fitness > self.best_ind.fitness:
                 if self.early_stop_strg[1] is not None:
                     if self.early_stop_strg[1] < (gen_best_ind.fitness - early_stop_last_ind.fitness):
                         early_stop_last_ind = gen_best_ind
@@ -105,11 +108,11 @@ class GA:
                 else:
                     early_stop_counter = 0
 
-                best_ind = gen_best_ind
+                self.best_ind = gen_best_ind
             else:
                 early_stop_counter += 1
 
-            self.convergence_data.append(best_ind.fitness)
+            self.convergence_data.append(self.best_ind.fitness)
 
             length = len(self.pop)
             mean = sum(fits) / length
@@ -118,7 +121,7 @@ class GA:
 
             print(f"Gen (%2d) - Min: %5.4f - Avg: %5.4f - Gen max: %5.4f -"
                   f" Gen best ind: {gen_best_ind} - Max: %5.4f" %
-                  (i+1, _min, mean, _max, best_ind.fitness))
+                  (i+1, _min, mean, _max, self.best_ind.fitness))
 
             self.gen_min_data.append(_min)
             self.gen_avg_data.append(mean)
@@ -127,10 +130,6 @@ class GA:
             if early_stop_counter == self.early_stop_strg[0]:
                 print(f'Early stopping at gen {i+1}!')
                 break
-
-        self.plot_convergence_curve()
-        self.plot_min_avg_max()
-        self.plot_objective_function(best_ind=best_ind)
 
     def plot_convergence_curve(self):
         t = np.arange(len(self.convergence_data))
@@ -166,14 +165,14 @@ class GA:
         fig.savefig("min_avg_max_curves.png")
         plt.show()
 
-    def plot_objective_function(self, best_ind):
-        if len(best_ind.genes) != 2:
+    def plot_3d_fitness_function(self):
+        if len(self.best_ind.genes) != 2:
             return
 
         x = np.linspace(
-            best_ind.complex_genes[0]["lower_bound"], best_ind.complex_genes[0]["upper_bound"], 50)
+            self.best_ind.complex_genes[0]["lower_bound"], self.best_ind.complex_genes[0]["upper_bound"], 50)
         y = np.linspace(
-            best_ind.complex_genes[1]["lower_bound"], best_ind.complex_genes[1]["upper_bound"], 50)
+            self.best_ind.complex_genes[1]["lower_bound"], self.best_ind.complex_genes[1]["upper_bound"], 50)
 
         X, Y = np.meshgrid(x, y)
         Z = np.vectorize(self.toolbox.plot_eval_func)(X, Y)
@@ -188,8 +187,8 @@ class GA:
         ax.set_zlabel('z')
 
         # Plot best individual position
-        ax.scatter([best_ind.genes[0]], [best_ind.genes[1]],
-                   [best_ind.fitness], plotnonfinite=True, zorder=10)
+        ax.scatter([self.best_ind.genes[0]], [self.best_ind.genes[1]],
+                   [self.best_ind.fitness], plotnonfinite=True, zorder=10)
 
         fig.colorbar(surf, shrink=0.5, aspect=5)
         fig.savefig("best_individual_3d.png")

@@ -2,43 +2,6 @@ import math
 import numpy as np
 from builder import Builder
 
-# def fitness_func(genes):
-#     x1 = genes[0]
-#     x2 = genes[1]
-
-#     return (-((x2 + 47) * sin(sqrt(abs((x1 / 2) + (x2 + 47))))) - (x1 * sin(sqrt(abs(x1 - (x2 + 47)))))).real
-
-
-# def plot_fitness_func(x1, x2):
-#     return (-((x2 + 47) * sin(sqrt(abs((x1 / 2) + (x2 + 47))))) - (x1 * sin(sqrt(abs(x1 - (x2 + 47)))))).real
-
-# def fitness_func(genes):
-#     x1 = genes[0]
-#     x2 = genes[1]
-
-#     return (((x1 + 2*x2 - 7)**2) + ((2*x1 + x2 - 5)**2)).real
-
-
-# def plot_fitness_func(x1, x2):
-#     return (((x1 + 2*x2 - 7)**2) + ((2*x1 + x2 - 5)**2)).real
-
-# def fitness_func(genes):
-#     x1 = genes[0]
-#     x2 = genes[1]
-#     x3 = genes[2]
-#     x4 = genes[3]
-#     x5 = genes[4]
-
-#     return (1 - (abs((math.sqrt(x1) * math.sin(x2**(math.sqrt(x3)))))) - ((x5**2)/x4) + (1/math.sqrt(x5))).real
-
-
-# def plot_fitness_func(x1, x2, x3, x4, x5):
-#     return (1 - (abs((sqrt(x1) * sin(x2**(sqrt(x3)))))) - ((x5**2)/x4) + (1/sqrt(x5))).real
-
-## Cool functions
-## 1) 1 - (abs((math.sqrt(x1) * math.sin(x2**(math.sqrt(x3)))))) - ((x5**2)/x4) + (1/math.sqrt(x5))
-## 2) ((x1 + 2*x2 - 7)**2) + ((2*x1 + x2 - 5)**2)
-## 3) Eggholder: -((x2 + 47) * sin(sqrt(abs((x1 / 2) + (x2 + 47))))) - (x1 * sin(sqrt(abs(x1 - (x2 + 47)))))
 
 user_func = None
 
@@ -80,3 +43,24 @@ if __name__ == '__main__':
     ga = builder.construct_ga_instance(base_ind, toolbox)
 
     ga.optimize()
+
+    while True:
+        print("\n\What do you want to do?\n")
+
+        print("0- Exit")
+        print("1- Plot convergence curve")
+        print("2- Plot min, avg and max of each generation")
+        print("3- Plot 3d graph with the best solution found (2 vars functions only)")
+
+        choose = input(": ")
+
+        if choose == '0':
+            break
+        elif choose == '1':
+            ga.plot_convergence_curve()
+        elif choose == '2':
+            ga.plot_min_avg_max()
+        elif choose == '3':
+            ga.plot_3d_fitness_function()
+        else:
+            print("\nWrong option. Try again!")
