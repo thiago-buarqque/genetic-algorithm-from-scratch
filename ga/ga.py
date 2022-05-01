@@ -1,13 +1,10 @@
 from cmath import sin, sqrt
+import copy
 from operator import attrgetter
 from tkinter import E
 import numpy as np
 
 import matplotlib.pyplot as plt
-
-
-def fitness_func_(x1, x2):
-    return (-((x2 + 47) * sin(sqrt(abs((x1 / 2) + (x2 + 47))))) - (x1 * sin(sqrt(abs(x1 - (x2 + 47)))))).real
 
 
 class GA:
@@ -17,19 +14,14 @@ class GA:
                  mutation_rate,
                  toolbox,
                  base_ind,
-                 use_elitism=False,
-                 elitism_size=None):
+                 max_generations,
+                 elite_size = 0,
+                 early_stop_strg=[None, None]):
         self.crossover_rate = crossover_rate
 
         self.population_size = population_size
 
         self.mutation_rate = mutation_rate
-
-        self.elitism_size = elitism_size
-        self.use_elitism = use_elitism
-
-        if use_elitism is True and (elitism_size is None or elitism_size == 0):
-            raise Exception("Elitism size is invalid")
 
         self.base_ind = base_ind
 
@@ -42,6 +34,10 @@ class GA:
         self.gen_avg_data = []
         self.gen_max_data = []
 
+        self.max_generations = max_generations
+        self.elite_size = elite_size
+        self.early_stop_strg = early_stop_strg
+
         self.set_up()
 
     def set_up(self):
@@ -53,15 +49,28 @@ class GA:
         for ind in self.pop:
             ind.evaluate()
 
-    def optimize(self, generations, early_stop_strg=None):
+    def separate_elite(self, pop, n):
+        sorted_pop = sorted(pop, key=lambda ind: ind.fitness, reverse=True)
+        elite = sorted_pop[:n]
+
+        for i, ind in enumerate(pop):
+            for e in elite:
+                if e == ind:
+                    del pop[i]
+
+        return [copy.deepcopy(ind) for ind in elite], pop
+
+    def optimize(self):
         best_ind = None
 
         self.convergence_data = []
 
         early_stop_last_ind = None
         early_stop_counter = 0
-        for i in range(generations):
-            offspring = self.toolbox.select(self.pop)
+        for i in range(self.max_generations):
+            elite, aux_pop = self.separate_elite(copy.deepcopy(self.pop), self.elite_size)
+
+            offspring = self.toolbox.select(self.pop, len(aux_pop))
 
             # Perform crossover
             for child1, child2 in zip(offspring[::2], offspring[1::2]):
@@ -80,15 +89,15 @@ class GA:
             for invalid_ind in [ind for ind in offspring if ind.fitness is None]:
                 invalid_ind.evaluate()
 
-            self.pop = offspring
+            self.pop = offspring + elite
 
             fits = [ind.fitness for ind in self.pop]
 
             # Early stopping conditions
             gen_best_ind = max(self.pop, key=attrgetter('fitness'))
             if best_ind == None or gen_best_ind.fitness > best_ind.fitness:
-                if early_stop_strg[1] is not None:
-                    if early_stop_strg[1] < (gen_best_ind.fitness - early_stop_last_ind.fitness):
+                if self.early_stop_strg[1] is not None:
+                    if self.early_stop_strg[1] < (gen_best_ind.fitness - early_stop_last_ind.fitness):
                         early_stop_last_ind = gen_best_ind
                         early_stop_counter = 0
                     else:
@@ -108,14 +117,14 @@ class GA:
             _max = max(fits)
 
             print(f"Gen (%2d) - Min: %5.4f - Avg: %5.4f - Gen max: %5.4f -"
-                  f" Gen best ind: {gen_best_ind} - Best ind (fitness): {best_ind} (%5.4f)" %
+                  f" Gen best ind: {gen_best_ind} - Max: %5.4f" %
                   (i+1, _min, mean, _max, best_ind.fitness))
 
             self.gen_min_data.append(_min)
             self.gen_avg_data.append(mean)
             self.gen_max_data.append(_max)
 
-            if early_stop_counter == early_stop_strg[0]:
+            if early_stop_counter == self.early_stop_strg[0]:
                 print(f'Early stopping at gen {i+1}!')
                 break
 
@@ -131,11 +140,11 @@ class GA:
         ax.plot(t, s)
 
         ax.set(xlabel='Generation', ylabel='Fitness (max)',
-            title='Convergence curve')
+               title='Convergence curve')
         ax.grid()
 
         fig.savefig("convergence_curve.png")
-        # plt.show()
+        plt.show()
 
     def plot_min_avg_max(self):
         gens = np.arange(len(self.gen_min_data))
@@ -151,38 +160,37 @@ class GA:
         plt.legend()
 
         ax.set(xlabel='Generation', ylabel='Fitness',
-            title='Min, avg, max fitness p/ gen.')
+               title='Min, avg, max fitness p/ gen.')
         ax.grid()
 
         fig.savefig("min_avg_max_curves.png")
         plt.show()
 
     def plot_objective_function(self, best_ind):
-        if len(best_ind.genes) > 2:
+        if len(best_ind.genes) != 2:
             return
 
-        if len(best_ind.genes) == 2:
-            x = np.linspace(
-                best_ind.complex_genes[0]["lower_bound"], best_ind.complex_genes[0]["upper_bound"], 50)
-            y = np.linspace(
-                best_ind.complex_genes[1]["lower_bound"], best_ind.complex_genes[1]["upper_bound"], 50)
+        x = np.linspace(
+            best_ind.complex_genes[0]["lower_bound"], best_ind.complex_genes[0]["upper_bound"], 50)
+        y = np.linspace(
+            best_ind.complex_genes[1]["lower_bound"], best_ind.complex_genes[1]["upper_bound"], 50)
 
-            X, Y = np.meshgrid(x, y)
-            Z = np.vectorize(self.toolbox.plot_eval_func)(X, Y)
+        X, Y = np.meshgrid(x, y)
+        Z = np.vectorize(self.toolbox.plot_eval_func)(X, Y)
 
-            fig = plt.figure()
-            ax = plt.axes(projection='3d')
-            surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
-                            cmap='viridis', edgecolor='none')
-            ax.contour3D(X, Y, Z, 50, cmap='binary')
-            ax.set_xlabel('x')
-            ax.set_ylabel('y')
-            ax.set_zlabel('z')
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
+                               cmap='viridis', edgecolor='none')
+        ax.contour3D(X, Y, Z, 50, cmap='binary')
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
 
-            # Plot best individual position
-            ax.scatter([best_ind.genes[0]], [best_ind.genes[1]],
-                    [best_ind.fitness], plotnonfinite=True, zorder=10)
-            
-            fig.colorbar(surf, shrink=0.5, aspect=5)
-            fig.savefig("best_individual_3d.png")
-            plt.show()
+        # Plot best individual position
+        ax.scatter([best_ind.genes[0]], [best_ind.genes[1]],
+                   [best_ind.fitness], plotnonfinite=True, zorder=10)
+
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+        fig.savefig("best_individual_3d.png")
+        plt.show()

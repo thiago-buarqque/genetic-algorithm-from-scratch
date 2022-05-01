@@ -5,9 +5,10 @@ from operator import attrgetter
 
 
 class Operations:
-    def sl_tournament(self, pop, tourn_size=2):
+    def sl_tournament(self, pop, n, tourn_size=2):
+        print(f"Tourn of {tourn_size} with len pop of {len(pop)} to get {n} inds")
         new_population = []
-        for i in range(len(pop)):
+        for i in range(n):
             selected_individuals = np.random.choice(
                 pop, size=tourn_size, replace=False)
 
@@ -17,11 +18,11 @@ class Operations:
 
         return new_population
 
-    def sl_roulette_wheel(self, pop):
+    def sl_roulette_wheel(self, pop, n):
         s_inds = sorted(pop, key=attrgetter("fitness"), reverse=True)
         sum_fits = sum(getattr(ind, "fitness") for ind in pop)
         chosen = []
-        for i in range(len(pop)):
+        for i in range(n):
             u = random.random() * sum_fits
             sum_ = 0
             for ind in s_inds:
@@ -32,17 +33,24 @@ class Operations:
 
         return chosen
 
+    def cs_one_point(self, ind1, ind2):
+        cs_point = random.randint(1, len(ind1) - 1)
+
+        ind1[cs_point:], ind2[cs_point:] = ind2[cs_point:], ind1[cs_point:]
+
+        return ind1, ind2
+
     def cs_two_point(self, ind1, ind2):
-        cut_point1 = random.randint(0, len(ind1.genes))
-        cut_point2 = random.randint(0, len(ind1.genes) - 1)
+        cs_point1 = random.randint(0, len(ind1.genes))
+        cs_point2 = random.randint(0, len(ind1.genes) - 1)
 
-        if cut_point2 >= cut_point1:
-            cut_point2 += 1
+        if cs_point2 >= cs_point1:
+            cs_point2 += 1
         else:
-            cut_point1, cut_point2 = cut_point2, cut_point1
+            cs_point1, cs_point2 = cs_point2, cs_point1
 
-        ind1.genes[cut_point1:cut_point2], ind2.genes[cut_point1:cut_point2] \
-            = ind2.genes[cut_point1:cut_point2], ind1.genes[cut_point1:cut_point2]
+        ind1.genes[cs_point1:cs_point2], ind2.genes[cs_point1:cs_point2] \
+            = ind2.genes[cs_point1:cs_point2], ind1.genes[cs_point1:cs_point2]
 
         return ind1, ind2
 

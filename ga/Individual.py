@@ -7,7 +7,11 @@ class Individual:
         self.fitness_function = None
 
     def evaluate(self):
-        self.fitness = self.fitness_function(self.genes)
+        fit_func_vars_dict = {}
+        for i, complex in enumerate(self.complex_genes):
+            fit_func_vars_dict[complex["attr_name"]] = self.genes[i]
+        
+        self.fitness = self.fitness_function(fit_func_vars_dict)
 
     def register(self, attr_name, gen_function, lower_bound, upper_bound, *args):
         self.complex_genes.append({
