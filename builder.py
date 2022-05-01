@@ -52,7 +52,7 @@ class Builder:
         else:
             toolbox.register("select", operations.sl_roulette_wheel)
 
-        print("\n\nWhich crossover strategy do you want to use? (default: 1): ")
+        print("\n\nWhich crossover strategy do you want to use? (default: one point): ")
         print("1- One point")
         print("2- Two points")
         print("3- Uniform")
